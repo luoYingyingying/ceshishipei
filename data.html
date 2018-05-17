@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<script src="js/vue.js"></script>
+	<script src="js/axios.js"></script>
+	<style>
+		ol,ul{
+			padding:0;
+			margin:0;
+			list-style: none;
+
+		}
+		ol li{
+			float:left;
+			width:150px;
+			text-align: center;
+		}
+		.clear{
+			clear:both;
+		}
+		.slh{  /*省略号*/
+			text-overflow: ellipsis; 
+			overflow: hidden;
+			white-space: nowrap;
+		}
+	</style>
+</head>
+<body>
+	<div id="box">
+		<input type="text" v-model="companyName"/><br />
+		<input type="text" v-model="companyDesc"/>
+		<input type="button" @click="add"/>  <!--点击按钮添加数据，下面设置方法-->
+		<ul>
+			<li v-for="item in list" class="clear">
+				<ol>
+					<li>{{item.id}}</li>
+					<li>{{item.name}}</li>
+					<li class="slh">{{item.description}}</li> <!--将描述中多余的用省略号表示-->
+					<li @click="del(item.id)">删除</li>
+					<li @click="modify(item.id)">修改</li>
+				</ol>
+			</li>
+		</ul>
+	</div>
+	<script>
+		new Vue({
+			el:"#box",
+			data:{
+				list:[],
+				companyName:'',
+				companyDesc:""
+			},
+			created(){  //钩子函数，此函数时指实例创建完成之后执行的函数
+				this.getData();
+			},
+			methods:{
+				getData(){
+					//axios.get会返回一个pomise对象，可以使用then（）方法
+					axios.get("http://localhost:3000/companies",{
+						params:{  //读取指定项
+							//此项在控制台会将此数据当成查询字符串串联，显示出来
+							id_gte:3,
+						}
+					}).then((res)=>{
+						this.list=res.data;
+					})
+				},
+				add(){   //添加数据
+					axios.post("http://localhost:3000/companies",{
+						name:this.companyName,
+						description:this.companyDesc
+					},{
+						headers:{//post请求需要设置headers信息
+							"Content-Type":"application/json"
+						}
+					}).then((res)=>{ 
+						console.log(res);
+						this.getData();//读取和输出添加的内容信息
+					})
+				},
+				del(id){
+					if(confirm("确认要删除此条记录吗？")){  //弹出确认删除记录框
+						axios.delete("http://localhost:3000/companies/"+id).then((res)=>{
+							console.log(res);
+							this.getData();
+						})
+					}
+					
+				},
+				modify(id){
+					axios.patch("http://localhost:3000/companies/"+id,{
+						name:this.companyName,
+						description:this.companyDesc
+					},{
+						headers:{//和post请求需要设置headers信息
+							"Content-Type":"application/json"
+						}
+					}).then((res)=>{
+						this.getData()
+					})
+				}
+			}
+		})
+
+	</script>
+</body>
+</html>
